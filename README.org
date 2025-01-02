@@ -1,0 +1,79 @@
+#+title: Fennel sandbox
+
+Code written while learning [[https://fennel-lang.org/][Fennel]], in particular for the [[https://tic80.com/][TIC-80]]
+fantasy console.
+
+* Installing Fennel
+:PROPERTIES:
+:CREATED:  [2025-01-02 Thu 18:58]
+:END:
+
+- I use Fennel from Debian's repositories.
+
+  #+begin_src bash
+    sudo apt install fennel
+  #+end_src
+
+- [[https://git.sr.ht/~technomancy/fennel-mode][fennel-mode]] is a useful package for Emacs.
+
+- [[https://git.sr.ht/~xerool/fennel-ls][fennel-ls]] is a language server for Fennel. Works out of the box for
+  Fennel files with [[https://github.com/joaotavora/eglot][Eglot]]. I compiled it -- instructions [[https://git.sr.ht/~xerool/fennel-ls/tree/main/docs/manual.md#fennel-ls-language-server-binary][here]].
+
+* Compiling the TIC-80
+:PROPERTIES:
+:CREATED:  [2025-01-02 Thu 19:00]
+:END:
+
+1. Clone the repo:
+
+   #+begin_src bash
+     git clone --recursive https://github.com/nesbox/TIC-80
+   #+end_src
+
+2. Follow the instructions [[https://github.com/nesbox/TIC-80?tab=readme-ov-file#ubuntu-2404-noble-numbat][here]]. Add this flag for the pro version:
+   =DBUILD_PRO=On=. If you do, think about donating.
+
+   Wrapping up:
+
+   #+begin_src bash
+     sudo apt update && sudo apt -y install build-essential cmake git libpipewire-0.3-dev libwayland-dev libsdl2-dev ruby-dev libcurl4-openssl-dev libglvnd-dev libglu1-mesa-dev freeglut3-dev
+     cd TIC-80/build
+     cmake -DBUILD_SDLGPU=On -DBUILD_WITH_ALL=On -DBUILD_PRO=On .. && cmake --build . --parallel
+   #+end_src
+
+3. The executable is =build/bin/tic80=. Symlink it, for example.
+
+* Running the TIC-80 in the right directory
+:PROPERTIES:
+:CREATED:  [2025-01-02 Thu 19:12]
+:END:
+
+#+begin_src bash
+  tic80 --fs /path/to/dir/ &
+#+end_src
+
+To load a game:
+
+#+begin_src bash
+  load game.fnl
+#+end_src
+
+Then it's a back and forth between Emacs and the TIC-80. Change the
+Fennel file in Emacs, hit =C-r= in the console.
+
+Activate =auto-revert-mode= in Emacs in case you change things
+directly in the TIC-80 with the =save= command (sprites, etc.).
+
+* Loading code
+:PROPERTIES:
+:CREATED:  [2025-01-02 Thu 21:48]
+:END:
+
+So far I don't know how to load Fennel code directly. So I simply
+compile the file to Lua using =fennel -c [file.fnl] and then load it
+like this:
+
+#+begin_src fennel
+  (local module (require :module))
+  (module.myfunc)
+#+end_src

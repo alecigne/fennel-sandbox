@@ -70,7 +70,7 @@ directly in the TIC-80 with the =save= command (sprites, etc.).
 :END:
 
 So far I don't know how to load Fennel code directly. So I simply
-compile the file to Lua using =fennel -c [file.fnl] and then load it
+compile the file to Lua using =fennel -c [file.fnl]= and then load it
 like this:
 
 #+begin_src fennel

@@ -77,3 +77,10 @@ like this:
   (local module (require :module))
   (module.myfunc)
 #+end_src
+
+I don't know how to group functions and macros together either. At the
+moment I'm simply writing Fennel macros in [[file:utils.fnl][utils.fnl]] for fun. There's
+an interesting article about this [[https://andreyor.st/posts/2023-08-27-fennel-libraries-as-single-files/][here]].
+
+I also don't know how to create a custom indentation for my Fennel
+macros in Emacs.

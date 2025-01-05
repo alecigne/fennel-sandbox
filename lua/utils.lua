@@ -26,4 +26,7 @@ end
 local function table_3f(x)
   return (type(x) == "table")
 end
-return {inc = inc, dec = dec, first = first, last = last, ["nil?"] = nil_3f, ["table?"] = table_3f}
+local function half(x)
+  return (x / 2)
+end
+return {inc = inc, dec = dec, first = first, last = last, ["nil?"] = nil_3f, ["table?"] = table_3f, half = half}

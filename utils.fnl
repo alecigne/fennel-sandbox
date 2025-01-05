@@ -34,9 +34,14 @@
   `(when (not ,condition)
      ,...))
 
+(fn half [x]
+  "Return half of X."
+  (/ x 2))
+
 {: inc
  : dec
  : first
  : last
  : nil?
- : table?}
+ : table?
+ : half}

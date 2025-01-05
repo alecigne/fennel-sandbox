@@ -3,6 +3,33 @@
 
 (local u (require :lua/utils))
 
+;;; Geometry
+
+(fn point [x y]
+  "Build a point in the plane, with coordinates X,Y"
+  {: x : y})
+
+(fn iline [p1 p2 col]
+  (line p1.x p1.y p2.x p2.y col))
+
+(fn rotate-orig [p deg]
+  "Rotate P around the origin by DEG degrees, counterclockwise."
+  (let [rad (math.rad deg)
+        cos (math.cos rad)
+        sin (math.sin rad)]
+    (point (+ (* p.x cos) (* p.y (- sin)))
+           (+ (* p.y cos) (* p.x sin)))))
+
+(fn rotate [p1 p2 deg]
+  "Rotate P1 around P2 by DEG degrees, counterclockwise.
+Rotation is done relative to the origin, then translated to its final place."
+  (let [p1o (point (- p1.x p2.x) (- p1.y p2.y))
+        p2o (rotate-orig p1o deg)]
+    (point (+ p2o.x p2.x)
+           (+ p2o.y p2.y))))
+
+;;; Time
+
 (fn utime []
   "Return the current UNIX timestamp."
   (math.floor (tstamp)))
@@ -30,6 +57,8 @@
      :m (% (/ sec 60) 60)
      :s (% sec 60)}))
 
+;;; Clock
+
 (fn clock->geoclock [clock]
   "Convert a clock into a 'geometrical clock': 3 components expressed in
 degrees."
@@ -37,50 +66,21 @@ degrees."
    :m (* (/ clock.m 60) 360)
    :s (* (/ clock.s 60) 360)})
 
-(fn point [x y]
-  "Build a point in the plane, with coordinates X,Y"
-  {: x : y})
+(fn draw-clock [ltime pos radius]
+  "Draw a clock from a local time LTIME, a position POS and a radius RADIUS."
+  (local geoclock (-> (ltime->clock ltime) (clock->geoclock)))
+  (local noon (point pos.x (+ (- pos.y radius) (/ radius 5))))
+  (circb pos.x pos.y radius 10)
+  (each [_ angle (pairs geoclock)] (iline pos (rotate noon pos angle) 12))
+  (circ pos.x pos.y (/ radius 20) 10))
 
 (local center (point (u.half 240) (u.half 136)))
-(local noon (point center.x 30))
-
-(fn rotate-orig [p deg]
-  "Rotate P around the origin by DEG degrees, counterclockwise."
-  (let [rad (math.rad deg)
-        cos (math.cos rad)
-        sin (math.sin rad)]
-    (point (+ (* p.x cos) (* p.y (- sin)))
-           (+ (* p.y cos) (* p.x sin)))))
-
-(fn rotate [p1 p2 deg]
-  "Rotate P1 around P2 by DEG degrees, counterclockwise.
-Rotation is done relative to the origin, then translated to its final place."
-  (let [p1o (point (- p1.x p2.x) (- p1.y p2.y))
-        p2o (rotate-orig p1o deg)]
-    (point (+ p2o.x p2.x)
-           (+ p2o.y p2.y))))
-
-(fn draw-hand [deg col]
-  "Draw any clock hand at a given angle DEG, in color COL."
-  (let [hand (rotate noon center deg)]
-    (line center.x center.y hand.x hand.y col)))
-
-(fn geoclock->drawing [geoclock]
-  (circb center.x center.y 50 10)
-  (draw-hand geoclock.h 2)
-  (draw-hand geoclock.m 3)
-  (draw-hand geoclock.s 4))
-
-(fn draw-clock [ltime]
-  (-> (ltime->clock ltime)
-      (clock->geoclock)
-      (geoclock->drawing)))
 
 (fn _G.TIC []
   (cls 8)
   (let [ltime (utime->ltime (utime) 1)]
     (print (ltime->string ltime) 10 10 12)
-    (draw-clock ltime)))
+    (draw-clock ltime center 50)))
 
 ;; <PALETTE>
 ;; 000:1a1c2c5d275db13e53ef7d57ffcd75a7f07038b76425717929366f3b5dc941a6f673eff7f4f4f494b0c2566c86333c57

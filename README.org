@@ -70,13 +70,16 @@ directly in the TIC-80 with the =save= command (sprites, etc.).
 :END:
 
 So far I don't know how to load Fennel code directly. So I simply
-compile the file to Lua using =fennel -c [file.fnl]= and then load it
-like this:
+compile the Fennel file to Lua using =fennel -c [file.fnl]= and then
+load it like this:
 
 #+begin_src fennel
   (local module (require :module))
   (module.myfunc)
 #+end_src
+
+⚠️ TIC-80 has to be started from the root directory since some scripts
+reference modules from the =lua/= directory.
 
 I don't know how to group functions and macros together either. At the
 moment I'm simply writing Fennel macros in [[file:utils.fnl][utils.fnl]] for fun. There's

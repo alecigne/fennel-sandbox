@@ -3,6 +3,11 @@
 Code written while learning [[https://fennel-lang.org/][Fennel]], in particular for the [[https://tic80.com/][TIC-80]]
 fantasy console.
 
+This project is available on [[https://github.com/alecigne/fennel-sandbox][GitHub]] as well as on my [[https://lecigne.net/projects/fennel-sandbox/README.html][website]]. If
+you're on GitHub right now, it might be more comfortable for you to
+browse it on my website -- although I still need to take the time to
+add syntax highlighting 😑
+
 * Projects
 :PROPERTIES:
 :CREATED:  [2025-01-12 Sun 15:43]

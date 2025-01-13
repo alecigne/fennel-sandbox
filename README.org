@@ -8,8 +8,8 @@ fantasy console.
 :CREATED:  [2025-01-12 Sun 15:43]
 :END:
 
-- [[file:2025-01-01_hello_world/README.org][2025-01-01_hello_world]]
-- [[file:2025-01-04_analog_clock/2025-01-04_analog_clock.org][2025-01-04_analog_clock]]
+- [[file:2025-01-01_hello_world/README.org][2025-01-01]] : Hello World
+- [[file:2025-01-04_analog_clock/2025-01-04_analog_clock.org][2025-01-04]] : Analog Clock
 
 * Notes
 :PROPERTIES:
@@ -100,3 +100,10 @@ an interesting article about this [[https://andreyor.st/posts/2023-08-27-fennel-
 
 I also don't know how to create a custom indentation for my Fennel
 macros in Emacs.
+
+* Config                                                           :noexport:
+:PROPERTIES:
+:CREATED:  [2025-01-13 Mon 23:46]
+:END:
+
+#+options: num:nil

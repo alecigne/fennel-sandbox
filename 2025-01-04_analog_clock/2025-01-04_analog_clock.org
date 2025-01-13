@@ -1,0 +1,304 @@
+#+title: 2025-01-04 -- An analog clock
+
+* Iteration 1: analog clock with a second hand
+:PROPERTIES:
+:CREATED:  [2025-01-12 Sun 13:34]
+:END:
+
+For iteration 1, we will begin with a simple analog clock featuring
+only a second hand. This clock can be represented in two ways:
+
+- *Time representation* :: The number of seconds that have elapsed
+  since the most recent full minute. It is an integer in the range
+  =[0,60[=. We will refer to this representation as a *clock* in the
+  code.
+
+- *Geometric representation* :: The angle in degrees between the
+  second hand and the 12 o'clock position. It is an integer in the
+  range =[0,360[=. We will refer to this representation as a
+  *geometric clock* in the code, or geoclock (a kind of geometrical
+  object).
+
+We will start writing the program by converting an arbitrary number of
+seconds into a *clock*:
+
+#+begin_src fennel
+  (fn seconds->clock [seconds]
+    (% seconds 60))
+#+end_src
+
+Converting a *clock* to a *geoclock* is equally straightforward:
+
+#+begin_src fennel
+  (fn clock->geoclock [clock]
+    (* (/ clock 60) 360))
+#+end_src
+
+Next, we need to actually /draw/ an analog clock in the TIC-80. To
+begin simply, we draw a static hand at the 12 o'clock position. This
+is done by rendering a 50-pixel line extending upward from the center
+of the screen:
+
+#+begin_src fennel
+(fn _G.TIC []
+  (cls 8)
+  (let [center-x (/ 240 2)
+        center-y (/ 136 2)]
+    (line center-x center-y center-x (- center-y 50) 12)))
+#+end_src
+
+This results in a basic representation of the second hand:
+
+#+attr_html: :width 600 :style border:2px solid black;
+[[file:data/2025-01-04_clock_1.png]]
+
+The above implementation is functional but lacks abstraction. To
+address this, we introduce helper functions to organize and generalize
+the drawing logic:
+
+#+begin_src fennel
+  (fn half [x] (/ x 2))
+
+  (fn point [x y] {: x : y })
+
+  (fn pline [p1 p2 color]
+    (line p1.x p1.y p2.x p2.y color))
+
+  (fn draw-hand [center size color]
+    (pline center (point center.x (- center.y size)) color))
+
+  (local center (point (half 240) (half 136)))
+
+  (fn _G.TIC []
+    (cls 8)
+    (let [white 12]
+      (draw-hand center 50 white)))
+#+end_src
+
+1. ~half~ -- A utility function to compute half of a given number.
+
+2. ~point~ -- A helper function to create a point with ~x~ and ~y~
+   coordinates.
+
+3. ~pline~ -- A utility function that draws a line between two points.
+
+4. ~draw-hand~ -- A function that uses ~pline~ to draw a hand (a line)
+   extending upward from a given center, with a size and color.
+
+So far, there is no relationship between a clock and its hand. To
+establish this relationship, we need to allow the ~draw-hand~ function
+to accept an /angle/. To implement this, we require a little bit of
+geometry.
+
+The mathematical formula for rotating a point (x, y) around the origin
+by an angle theta is as follows:
+
+\[
+x' = x \cos \theta - y \sin \theta
+\]
+
+\[
+y' = y \cos \theta + x \sin \theta
+\]
+
+You can test things out on [[https://academo.org/demos/rotation-about-point/][this page]]. Note that the rotation is
+counterclockwise because Y values go /up/ in a classic plane. On the
+TIC-80, values go down, so the rotation will be clockwise (which is a
+good thing for a clock 🙂).
+
+Using the formula above, we can create a function, ~rotate-orig~, that
+rotates a given point (x, y) around the origin by a specified angle in
+degrees, called ~deg~, and returns the resulting point:
+
+#+begin_src fennel
+  (fn rotate-orig [x y angle]
+    {:x (- (* x (math.cos angle)) (* y (math.sin angle)))
+     :y (+ (* y (math.cos angle)) (* x (math.sin angle)))})
+#+end_src
+
+Reworking things a little bit, using our ~point~ function and allowing
+an angle in degrees, we get:
+
+#+begin_src fennel
+(fn rotate-orig [p deg]
+  (let [rad (math.rad deg)
+        cos (math.cos rad)
+        sin (math.sin rad)]
+    (point (- (* p.x cos) (* p.y sin))
+           (+ (* p.y cos) (* p.x sin)))))
+#+end_src
+
+However, we need a function that rotates a point around /any other
+point/, not only the origin of the plane. Here's the formula to do it:
+
+\[
+x' = (x - cx) \cos \theta - (y - cy) \sin \theta + cx
+\]
+
+\[
+y' = (y - cy) \cos \theta + (x - cx) \sin \theta + cy
+\]
+
+Actually, if you look closely, we can keep our original function and
+write another, more general one:
+
+#+begin_src fennel
+  (fn rotate [p1 p2 deg]
+    (let [p1o (point (- p1.x p2.x) (- p1.y p2.y))
+          p2o (rotate-orig p1o deg)]
+      (point (+ p2o.x p2.x)
+             (+ p2o.y p2.y))))
+#+end_src
+
+Indeed, the process of rotating a point around any other point can be
+broken down into three steps:
+
+1. Translate the system -- Move the point ~p1~ such that the center of
+   rotation ~p2~ becomes the origin, to obtain ~p1o~. This is achieved
+   by subtracting the coordinates of ~p2~ from ~p1~.
+
+2. Rotate around the origin -- Use the existing ~rotate-orig~ function
+   to perform the rotation of the translated point ~p1o~ by the given
+   angle deg, to obtain ~p2o~.
+
+3. Translate back -- Move ~p2o~ back to the original coordinate system
+   by adding the coordinates of ~p2~. This reverts the earlier
+   translation, placing the rotated point in its correct position.
+
+Although I could write ~rotate~ directly, for now I like having
+~rotate-orig~ as a helper function because it makes things clearer in
+my head 🙂
+
+Next, we update the ~draw-hand~ function to use this rotation
+logic. By incorporating an angle parameter, the function can now draw
+a clock hand at any specified angle:
+
+#+begin_src fennel
+(fn draw-hand [center size deg color]
+  (let [noon (point center.x (- center.y size))
+        extremity (rotate noon deg)]
+    (pline center extremity color)))
+#+end_src
+
+1. A "noon" point is created with the previous logic.
+
+2. The ~rotate~ function is used to rotate the initial "noon" position
+   by the specified angle ~deg~, resulting in the new endpoint of the
+   hand, ~extremity~.
+
+3. Finally, the ~pline~ function is used to draw the line from the
+   center of the clock to the hand's extremity.
+
+The result:
+
+#+begin_src fennel
+  (fn half [x] (/ x 2))
+
+  (fn point [x y] {: x : y })
+
+  (fn pline [p1 p2 color]
+    (line p1.x p1.y p2.x p2.y color))
+
+  (fn rotate-orig [p deg]
+    (let [rad (math.rad deg)
+          cos (math.cos rad)
+          sin (math.sin rad)]
+      (point (+ (* p.x cos) (* p.y (- sin)))
+             (+ (* p.y cos) (* p.x sin)))))
+
+  (fn rotate [p1 p2 deg]
+    (let [p1o (point (- p1.x p2.x) (- p1.y p2.y))
+          p2o (rotate-orig p1o deg)]
+      (point (+ p2o.x p2.x)
+             (+ p2o.y p2.y))))
+
+  (fn draw-hand [center size deg color]
+    (let [noon (point center.x (- center.y size))
+          extremity (rotate noon center deg)]
+      (pline center extremity color)))
+
+  (local center (point (half 240) (half 136)))
+
+  (fn _G.TIC []
+    (cls 8)
+    (let [hand-size 50
+          angle 45
+          white 12]
+      (draw-hand center hand-size angle white)))
+#+end_src
+
+#+attr_html: :width 600 :style border:2px solid black;
+[[file:data/2025-01-04_clock_2.png]]
+
+Using our functions defined at the beginning, we can now easily draw a
+moving second hand. We first need to get seconds from TIC-80's ~time~
+function, that returns milliseconds. Since we want a "discrete" second
+hand and not a smooth second hand:
+
+#+begin_src fennel
+  (fn get-seconds []
+    (math.floor (/ (time) 1000)))
+#+end_src
+
+Then, writing something like this will draw a hand that moves with
+each passing second:
+
+#+begin_src fennel
+  (let [seconds (get-seconds)
+        geoclock (-> (seconds->clock seconds)
+                     (clock->geoclock))]
+    (draw-hand center (- clock-size 10) geoclock white-color))
+#+end_src
+
+The ~->~ threading macro takes its first value and splices it into the
+second form as the first argument. So in this case, the clock is
+passed to ~clock->geoclock~ and we obtain a geoclock. Yay, Lisp!
+
+By changing ~draw-hand~ to take the angle as the first argument:
+
+#+begin_src fennel
+  (fn draw-hand [deg center size color]
+    (let [noon (point center.x (- center.y size))
+          extremity (rotate noon center deg)]
+      (pline center extremity color)))
+#+end_src
+
+...we can even get a nice little "functional" pipeline that draws our
+clock:
+
+#+begin_src fennel
+  (fn _G.TIC []
+    (cls 8)
+    (circb center.x center.y clock-size white-color)
+    (-> (get-seconds)
+        (seconds->clock)
+        (clock->geoclock)
+        (draw-hand center (- clock-size 10) white-color)))
+#+end_src
+
+Our ~TIC~ function is now a clock-rendering function that depends on
+time only!
+
+#+attr_html: :width 600 :style border:2px solid black;
+[[file:data/2025-01-04_clock_3.png]]
+
+The final code for iteration 1 is available in the
+[[file:2025-01-04_analog_clock_1.fnl][2025-01-04_analog_clock_1.fnl]] file. It could still be improved in
+quite a few ways, but since we're seeing an abstraction emerge, we
+might as well focus our efforts on improving it directly in a next
+iteration.
+
+* Iteration 2: analog clock displaying UTC time
+:PROPERTIES:
+:CREATED:  [2025-01-12 Sun 13:35]
+:END:
+
+Coming soon.
+
+* Config                                                           :noexport:
+:PROPERTIES:
+:CREATED:  [2025-01-12 Sun 14:28]
+:END:
+
+#+options: num:nil toc:nil
+#+property: header-args :eval never-export

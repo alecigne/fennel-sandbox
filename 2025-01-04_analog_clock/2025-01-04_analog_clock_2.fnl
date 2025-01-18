@@ -49,8 +49,7 @@
     (pline center extremity color)))
 
 (fn draw-clock [geoclock center size]
-  (let [white 12
-        light-grey 13]
+  (let [white 12 light-grey 13]
     (circb center.x center.y size white)
     (draw-hand geoclock.hdeg center (- size 20) white)
     (draw-hand geoclock.mdeg center (- size 10) white)

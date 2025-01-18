@@ -1,15 +1,24 @@
 #+title: 2025-01-04 -- An analog clock
 
+This project aims at building an analog clock in the TIC-80 fantasy
+console through iterative development and literate programming. Each
+iteration will incrementally add new features and refine existing
+ones, starting with a simple timer-like clock in iteration 1 and
+evolving from there.
+
+In this project, functions are intentionally kept small and focused,
+and are designed to operate on tables (or maps).
+
 * Iteration 1: analog clock with a second hand
 :PROPERTIES:
 :CREATED:  [2025-01-12 Sun 13:34]
 :END:
 
-For iteration 1, we will begin with a simple analog clock featuring
-only a second hand. This clock can be represented in two ways:
+We will begin with a simple analog clock featuring only a second
+hand. In the code, this clock can be represented in two ways:
 
 - *Time representation* :: The number of seconds that have elapsed
-  since the most recent full minute. It is an integer in the range
+  since the most recent minute. It is an integer in the range
   =[0,60[=. We will refer to this representation as a *clock* in the
   code.
 
@@ -233,7 +242,7 @@ The result:
 Using our functions defined at the beginning, we can now easily draw a
 moving second hand. We first need to get seconds from TIC-80's ~time~
 function, that returns milliseconds. Since we want a "discrete" second
-hand and not a smooth second hand:
+hand and not a smooth second hand, we'll use ~math.floor~:
 
 #+begin_src fennel
   (fn get-seconds []
@@ -244,8 +253,8 @@ Then, writing something like this will draw a hand that moves with
 each passing second:
 
 #+begin_src fennel
-  (let [seconds (get-seconds)
-        geoclock (-> (seconds->clock seconds)
+  (let [geoclock (-> (get-seconds)
+                     (seconds->clock seconds)
                      (clock->geoclock))]
     (draw-hand center (- clock-size 10) geoclock white-color))
 #+end_src
@@ -264,7 +273,7 @@ By changing ~draw-hand~ to take the angle as the first argument:
 #+end_src
 
 ...we can even get a nice little "functional" pipeline that draws our
-clock:
+single-hand clock:
 
 #+begin_src fennel
   (fn _G.TIC []
@@ -316,7 +325,7 @@ TIC-80's ~tstamp~ function:
 Our earlier choice to represent a clock as the number of seconds
 elapsed since "midnight" turns out to be quite fitting, as UNIX time
 is defined as the number of seconds elapsed since 1970-01-01 at
-midnight UTC. Leap seconds might pose an issue (I'm not entirely sure
+midnight UTC. [[https://en.wikipedia.org/wiki/Leap_second][Leap seconds]] might pose an issue (I'm not entirely sure
 at the moment), but for the sake of simplicity, we will ignore them.
 
 However, our analog clock can now display 12 hours, or 43,200 seconds,
@@ -352,8 +361,7 @@ with its 3 hands based on a geoclock:
 
 #+begin_src fennel
   (fn draw-clock [geoclock center size]
-    (let [white 12
-          light-grey 13]
+    (let [white 12 light-grey 13]
       (circb center.x center.y size white)
       (draw-hand geoclock.hdeg center (- size 20) white)
       (draw-hand geoclock.mdeg center (- size 10) white)
@@ -392,5 +400,5 @@ Coming soon!
 :CREATED:  [2025-01-12 Sun 14:28]
 :END:
 
-#+options: num:nil toc:nil
+#+options: num:nil toc:nil ^:nil
 #+property: header-args :eval never-export

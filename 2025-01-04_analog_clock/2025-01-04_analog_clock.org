@@ -293,7 +293,99 @@ iteration.
 :CREATED:  [2025-01-12 Sun 13:35]
 :END:
 
-Coming soon.
+In its initial iteration, our clock functioned more like a timer than
+a true analog clock. It had only one hand and relied solely on the
+number of seconds that had elapsed since the program started. In this
+iteration, we will create a true analog clock that utilizes UNIX time.
+
+So we won't be using the ~get-seconds~ function anymore:
+
+#+begin_src fennel
+  (fn get-seconds []
+    (math.floor (/ (time) 1000)))
+#+end_src
+
+Instead, we will rely on the ~utime~ function, which is based on
+TIC-80's ~tstamp~ function:
+
+#+begin_src fennel
+  (fn utime []
+    (math.floor (tstamp)))
+#+end_src
+
+Our earlier choice to represent a clock as the number of seconds
+elapsed since "midnight" turns out to be quite fitting, as UNIX time
+is defined as the number of seconds elapsed since 1970-01-01 at
+midnight UTC. Leap seconds might pose an issue (I'm not entirely sure
+at the moment), but for the sake of simplicity, we will ignore them.
+
+However, our analog clock can now display 12 hours, or 43,200 seconds,
+with its 3 hands. As a result, ~seconds->clock~ is updated to:
+
+#+begin_src fennel
+  (fn seconds->clock [seconds]
+    (% seconds 43200))
+#+end_src
+
+In other words, our previous *time representation* (or *clock*) from
+iteration 1 is now an integer in the range =[0,43200[=.
+
+Of course, our *geometric representation* (or *geoclock*) will also
+change. We still require an angle in degrees between a hand and the 12
+o'clock position, but now this applies to 3 hands: the hour, minute,
+and second hands.
+
+Following this logic, ~clock->geoclock~ becomes:
+
+#+begin_src fennel
+  (fn clock->geoclock [clock]
+    (let [h (/ clock 3600)
+          m (% (/ clock 60) 60)
+          s (% clock 60)]
+      {:hdeg (* (/ h 12) 360)
+       :mdeg (* (/ m 60) 360)
+       :sdeg (* (/ s 60) 360)}))
+#+end_src
+
+Finally, we can create a ~draw-clock~ function to render the clock
+with its 3 hands based on a geoclock:
+
+#+begin_src fennel
+  (fn draw-clock [geoclock center size]
+    (let [white 12
+          light-grey 13]
+      (circb center.x center.y size white)
+      (draw-hand geoclock.hdeg center (- size 20) white)
+      (draw-hand geoclock.mdeg center (- size 10) white)
+      (draw-hand geoclock.sdeg center (- size 10) light-grey)))
+#+end_src
+
+Note that the first argument to ~draw-clock~ is a geoclock, allowing
+us to write a streamlined "pipeline" in the TIC-80's main function:
+
+#+begin_src fennel
+  (fn _G.TIC []
+    (cls 8)
+    (-> (utime)
+        (seconds->clock)
+        (clock->geoclock)
+        (draw-clock center clock-size)))
+#+end_src
+
+And the final result:
+
+#+attr_html: :width 600 :style border:2px solid black;
+[[file:data/2025-01-04_clock_4.png]]
+
+The final code for iteration 2 is available in the
+[[file:2025-01-04_analog_clock_2.fnl][2025-01-04_analog_clock_2.fnl]] file.
+
+* Iteration 3
+:PROPERTIES:
+:CREATED:  [2025-01-18 Sat 23:17]
+:END:
+
+Coming soon!
 
 * Config                                                           :noexport:
 :PROPERTIES:

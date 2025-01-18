@@ -43,27 +43,30 @@
      :mdeg (* (/ m 60) 360)
      :sdeg (* (/ s 60) 360)}))
 
-(fn draw-hand [center size deg color]
+(fn draw-hand [deg center size color]
   (let [noon (point center.x (- center.y size))
         extremity (rotate noon center deg)]
     (pline center extremity color)))
+
+(fn draw-clock [geoclock center size]
+  (let [white 12
+        light-grey 13]
+    (circb center.x center.y size white)
+    (draw-hand geoclock.hdeg center (- size 20) white)
+    (draw-hand geoclock.mdeg center (- size 10) white)
+    (draw-hand geoclock.sdeg center (- size 10) light-grey)))
 
 ;; Main
 
 (local center (point (half 240) (half 136)))
 (local clock-size 50)
-(local white-color 12)
 
 (fn _G.TIC []
   (cls 8)
-  (circb center.x center.y clock-size white-color)
-  (let [geoclock (-> (utime)
-                     (seconds->clock)
-                     (clock->geoclock))]
-    (draw-hand center (- clock-size 20) geoclock.hdeg white-color)
-    (draw-hand center (- clock-size 10) geoclock.mdeg white-color)
-    (draw-hand center (- clock-size 10) geoclock.sdeg 13)))
-
+  (-> (utime)
+      (seconds->clock)
+      (clock->geoclock)
+      (draw-clock center clock-size)))
 
 ;; <PALETTE>
 ;; 000:1a1c2c5d275db13e53ef7d57ffcd75a7f07038b76425717929366f3b5dc941a6f673eff7f4f4f494b0c2566c86333c57
